@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            #canvas {
+                position: absolute;
+                left: 0px;
+                top: 0px;
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="canvas">
+        </canvas>
+        <script>
+            const canvas = document.getElementById("canvas");
+            const ctx = canvas.getContext("2d");
+            
+            let canvasSize;
+            
+            let progress = 0;
+            
+            const doors = [
+                {x: -4, y: -2, number: 14},
+                {x: -3, y: -3, number: 15},
+                {x: -2, y: -3, number: 23},
+                {x: -1, y: -3, number:  2},
+                {x:  0, y: -3, number: 19},
+                {x:  1, y: -3, number: 16},
+                {x:  2, y: -3, number: 10},
+                {x:  3, y: -3, number:  5},
+                {x:  4, y: -3, number: 20},
+                
+                {x: -2, y: -2, number:  9},
+                {x: -2, y: -1, number:  7},
+                {x: -2, y:  0, number:  6},
+                {x: -2, y:  1, number:  8},
+                {x: -2, y:  2, number:  3},
+                {x: -2, y:  3, number: 21},
+                {x: -3, y:  3, number: 11},
+                
+                {x:  2, y: -2, number: 17},
+                {x:  2, y: -1, number: 13},
+                {x:  2, y:  0, number: 22},
+                {x:  2, y:  1, number: 12},
+                {x:  2, y:  2, number:  1},
+                {x:  2, y:  3, number:  4},
+                {x:  3, y:  3, number: 24},
+                {x:  4, y:  2, number: 18},
+            ];
+            
+            function drawSquare(x, y) {
+                ctx.beginPath();
+                ctx.lineWidth = 0.05;
+                ctx.rect(x-0.5, y-0.5, 1, 1);
+                ctx.fill();
+                ctx.stroke();
+                ctx.closePath();
+            }
+            
+            function drawDoor(door) {
+                const completed = door.number <= progress;
+                ctx.fillStyle = completed ? "black" : "white";
+                drawSquare(door.x, door.y);
+                
+                ctx.font = "0.5px sans-serif";
+                ctx.lineWidth = 0.06;
+                ctx.strokeText(door.number, door.x, door.y+0.2);
+                ctx.fillStyle = completed ? "white" : "black";
+                ctx.fillText(door.number, door.x, door.y+0.2);
+            }
+            
+            function drawDoorBorder(door) {
+                const completed = door.number <= progress;
+                if (completed) {
+                    const hue = door.number*75;
+                    const startAngle = Date.now()/1000%Math.PI;
+                    const gradient = ctx.createConicGradient(startAngle, door.x, door.y);
+                    for (let i = 0; i <= 20; i++) {
+                        const a = i/20;
+                        const l1 = Math.cos(a*Math.PI*8+startAngle*4)*0.5+0.5;
+                        const l2 = Math.cos(i*Math.PI)*0.5+0.5
+                        const lightness = 50*l1*l2;
+                        gradient.addColorStop(a, `HSL(${hue}, 100%, ${lightness}%)`);
+                    }
+                    ctx.strokeStyle = gradient;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(door.x-0.5, door.y-0.5);
+                    
+                    if (!completedDoorAt(door.x-1, door.y)) ctx.lineTo(door.x-0.5, door.y+0.5);
+                    else ctx.moveTo(door.x-0.5, door.y+0.5);
+                    if (!completedDoorAt(door.x, door.y+1)) ctx.lineTo(door.x+0.5, door.y+0.5);
+                    else ctx.moveTo(door.x+0.5, door.y+0.5);
+                    if (!completedDoorAt(door.x+1, door.y)) ctx.lineTo(door.x+0.5, door.y-0.5);
+                    else ctx.moveTo(door.x+0.5, door.y-0.5);
+                    if (!completedDoorAt(door.x, door.y-1)) ctx.lineTo(door.x-0.5, door.y-0.5);
+                    else ctx.moveTo(door.x-0.5, door.y-0.5);
+                    
+                    ctx.stroke();
+                    ctx.closePath();
+                }
+            }
+            
+            function searchDoorAt(x, y) {
+                for (let i = 0; i < doors.length; i++) {
+                    if (doors[i].x === x && doors[i].y === y) return doors[i];
+                }
+                return null;
+            }
+            
+            function completedDoorAt(x, y) {
+                const door = searchDoorAt(x, y);
+                if (door === null) return false;
+                return door.number <= progress;
+            }
+            
+            function drawCalendar() {
+                const width = Math.ceil(10/canvasSize*canvas.width);
+                const height = Math.ceil(10/canvasSize*canvas.height);
+                ctx.strokeStyle = "gray";
+                ctx.fillStyle = "white";
+                for (let y = -Math.floor(height/2); y <= Math.ceil(height/2); y++) {
+                    for (let x = -Math.floor(width/2); x <= Math.ceil(width/2); x++) {
+                        drawSquare(x, y);
+                    }
+                }
+                
+                ctx.strokeStyle = "black";
+                for (let i = 0; i < doors.length; i++) drawDoor(doors[i]);
+            }
+            
+            function drawBorder() {
+                ctx.strokeStyle = "gray";
+                for (let i = 0; i < doors.length; i++) drawDoorBorder(doors[i]);
+                
+                window.requestAnimationFrame(drawBorder);
+            }
+            
+            function doorClicked(door) {
+                console.log(door.number);
+            }
+            
+            window.addEventListener("click", function(evt) {
+                const x = Math.round((evt.clientX-canvas.width/2)/canvasSize*10);
+                const y = Math.round((evt.clientY-canvas.height/2)/canvasSize*10);
+                for (let i = 0; i < doors.length; i++) {
+                    if (x !== doors[i].x) continue;
+                    if (y !== doors[i].y) continue;
+                    doorClicked(doors[i]);
+                }
+            });
+            
+            function updateCanvasSize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                canvasSize = Math.min(canvas.width, canvas.height*1.25);
+                ctx.translate(canvas.width/2, canvas.height/2);
+                ctx.scale(canvasSize/10, canvasSize/10);
+                
+                ctx.lineCap = ctx.lineJoin = "round";
+                ctx.textAlign = "center";
+                
+                drawCalendar();
+            }
+            window.addEventListener("resize", updateCanvasSize);
+            updateCanvasSize();
+            drawBorder();
+        </script>
+    </body>
+</html>
