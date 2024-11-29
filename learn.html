@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            html {
+                height: 100%;
+            }
+            
+            body {
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+                flex-direction: column;
+                
+                height: 100%;
+                margin: 0px;
+                
+                font-size: 30px;
+            }
+            
+            button {
+                transition: opacity 0.2s;
+                
+                font-size: 30px;
+            }
+            
+            #keybord td {
+                width: 100px;
+                height: 100px;
+                background-color: gray;
+                text-align: center;
+                font-size: 100px;
+            }
+            
+            .gray {
+                color: gray;
+            }
+        </style>
+    </head>
+    <body>
+        <h1 id="task"></h1>
+        <tt id="tt"></tt>
+        <button id="button"></button>
+        <table id="keybord">
+            <tr>
+                <td onpointerdown="input(1)">1</td>
+                <td onpointerdown="input(2)">2</td>
+                <td onpointerdown="input(3)">3</td>
+            </tr>
+            <tr>
+                <td onpointerdown="input(4)">4</td>
+                <td onpointerdown="input(5)">5</td>
+                <td onpointerdown="input(6)">6</td>
+            </tr>
+            <tr>
+                <td onpointerdown="input(7)">7</td>
+                <td onpointerdown="input(8)">8</td>
+                <td onpointerdown="input(9)">9</td>
+            </tr>
+            <tr>
+                <td onpointerdown="input('del')">⌫</td>
+                <td onpointerdown="input(0)">0</td>
+                <td onpointerdown="input('enter')">↵</td>
+            </tr>
+        </table>
+        <script src="./pi-digits.js"></script>
+        <script src="./generalFunctions.js"></script>
+        <script>
+            let cursor = 0;
+            let currentDigits;
+            let check;
+            
+            let buttonClickable = false;
+            
+            hide(keybord);
+            
+            main();
+            
+            async function main() {
+                const task = storage.task;
+                const source = storage.source;
+                
+                switch (task) {
+                    case "initial":
+                        document.title = strings.learnInitial + " - " + strings.title;
+                        await learnInitial(storage.progress+1);
+                        storage.progress++;
+                        break;
+                    case "general":
+                        document.title = strings.learnGeneral + " - " + strings.title;
+                        await learnGeneral(storage.progress);
+                        break;
+                    default:
+                        throw "unknown task: "+task;
+                }
+                
+                delete storage.task;
+                delete storage.source;
+                updateStorage();
+                
+                window.location.replace(source);
+            }
+            
+            async function learnInitial(day) {
+                let wrongAnswers = 0;
+                while (true) {
+                    await showDigits(day);
+                    const mistakes = await questDigits(day);
+                    if (mistakes === 0) break;
+                    else wrongAnswers++;
+                }
+                
+                const tasks = [day-1, day];
+                while (tasks.length !== 0) {
+                    const task = tasks.shift();
+                    const mistakes = await questDigits(task);
+                    if (mistakes !== 0) {
+                        tasks.push(task);
+                        wrongAnswers++;
+                    }
+                }
+                
+                const xp = Math.max(8-wrongAnswers, 5)*day;
+                
+                storage.xp += xp;
+                updateStorage();
+                await showXP(xp);
+            }
+            
+            async function learnGeneral(day) {
+                const result = selectTasks(day);
+                const tasks = result.tasks;
+                const xpFactor = result.xpFactor;
+                
+                let wrongAnswers = 0;
+                while (tasks.length !== 0) {
+                    const task = tasks.shift();
+                    const mistakes = await questDigits(task);
+                    if (mistakes !== 0) {
+                        tasks.push(task);
+                        wrongAnswers++;
+                    }
+                }
+                
+                const xp = Math.max(8-wrongAnswers, 5)*xpFactor;
+                
+                storage.xp += xp;
+                updateStorage();
+                await showXP(xp);
+            }
+            
+            async function showDigits(section) {
+                const digits = getSection(section);
+                currentDigits = digits;
+                
+                if (digits.length !== 1) task.innerHTML = strings.learnMemorizeN.replace("N", digits.length);
+                else task.innerHTML = strings.learnMemorize1;
+                tt.innerHTML = getHTML(section, false);
+                button.style.opacity = "0";
+                buttonClickable = false;
+                
+                await new Promise(resolve => setTimeout(resolve, (section+Math.PI)*1000));
+                
+                button.style.opacity = "1";
+                button.innerHTML = strings.learnContinue;
+                buttonClickable = true;
+                
+                await new Promise(resolve => button.onclick = resolve);
+            }
+            
+            async function questDigits(section) {
+                const digits = getSection(section);
+                currentDigits = digits;
+                cursor = 0;
+                
+                if (digits.length !== 1) task.innerHTML = strings.learnTypeMultiple;
+                else task.innerHTML = strings.learnType1;
+                tt.innerHTML = getHTML(section, true);
+                buttonClickable = false;
+                hide(button);
+                show(keybord);
+                
+                await new Promise(resolve => check = resolve);
+                
+                let mistakes = 0;
+                for (let i = 0; i < digits.length; i++) {
+                    const correct = digits[i] === window[i].innerHTML;
+                    window[i].style.backgroundColor = correct ? "green" : "red";
+                    if (!correct) mistakes++;
+                }
+                
+                tt.innerHTML += "<br>" + getHTML(section, false);
+                button.innerHTML = strings.learnContinue;
+                buttonClickable = true;
+                show(button);
+                hide(task, keybord);
+                
+                storage.times[section] = Date.now();
+                if (mistakes === 0) storage.scores[section] = Math.min(storage.scores[section]+1, 5);
+                else storage.scores[section] = 0;
+                
+                await new Promise(resolve => button.onclick = resolve);
+                
+                show(task);
+                
+                return mistakes;
+            }
+            
+            async function showXP(xp) {
+                hide(tt)
+                
+                task.innerHTML = strings.learnEarnedXP.replace("_XP_", xp);
+                button.innerHTML = strings.learnOK;
+                
+                await new Promise(resolve => button.onclick = resolve);
+            }
+            
+            function getHTML(section, asInput) {
+                const digitsBefore = getSection(section-1);
+                const digits = getSection(section);
+                const digitsAfter = getSection(section+1);
+                
+                let html = '<span class="gray">';
+                html += digitsBefore;
+                if (section === 1) html += ".";
+                html += "</span> ";
+                
+                if (!asInput) html += digits;
+                else for (let i = 0; i < digits.length; i++) {
+                    html += `<span id="${i}" style="outline: 1px solid gray;">&nbsp;</span>`;
+                }
+                if (section === 0) html += ".";
+                
+                html += ' <span class="gray">';
+                html += digitsAfter;
+                html += "</span>";
+                return html;
+            }
+            
+            function input(button) {
+                if (typeof button === "number") {
+                    if (cursor === currentDigits.length) return;
+                    document.getElementById(cursor).innerHTML = button;
+                    cursor++;
+                } else if (button === "del") {
+                    if (cursor === 0) return;
+                    cursor--;
+                    document.getElementById(cursor).innerHTML = "&nbsp;";
+                } else if (button === "enter") {
+                    if (cursor !== currentDigits.length) return;
+                    check();
+                }
+            }
+            
+            window.onkeydown = function (event) {
+                if (buttonClickable && event.key === "Enter") {
+                    button.click();
+                } else if (keybord.style.display === "") {
+                    switch (event.key) {
+                        case "0": case "1": case "2": case "3": case "4":
+                        case "5": case "6": case "7": case "8": case "9":
+                            input(event.key*1);
+                            break;
+                        case "Backspace":
+                            input("del");
+                            break;
+                        case "Enter":
+                            input("enter");
+                            break;
+                    }
+                }
+            };
+            
+            button.addEventListener("click", () => button.blur());
+        </script>
+    </body>
+</html>
