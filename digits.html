@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body {
+                font-size: 30px;
+            }
+            
+            .gray {
+                color: gray;
+            }
+            
+            #start {
+                position: absolute;
+                right: 10px;
+                top: 10px;
+                
+                border: 1px solid black;
+                border-radius: 5px;
+                padding: 2px;
+                background-color: white;
+                
+                font-family: sans-serif;
+                font-size: 20px;
+                
+                width: 50px;
+                width: fit-content;
+                overflow: hidden;
+            }
+        </style>
+    </head>
+    <body>
+        <tt id="display"></tt>
+        <div id="start" onclick="window.location.href = './start.html';">Back to the start page</div>
+        <script src="./pi-digits.js"></script>
+        <script src="./generalFunctions.js"></script>
+        <script>
+            start.innerHTML = strings.back1;
+            start.onmouseenter = () => start.innerHTML = strings.back2;
+            start.onmouseleave = () => start.innerHTML = strings.back1;
+            
+            document.title = strings.digitsPage + " - " + strings.title;
+            
+            const progress = 0;
+            
+            display.innerHTML = "";
+            for (let i = 0; i <= 52; i++) {
+                const digits = getSection(i);
+                if (i <= progress) display.innerHTML += `<b>${digits}</b>`;
+                else display.innerHTML += digits;
+                
+                let info = "&nbsp;".repeat(25-digits.length);
+                if (i === 0) {
+                    info += strings.digits3;
+                } else if (i === 1) {
+                    info += `${strings.digitsDay} &nbsp;1 - ${strings.digitsDigit} 1`;
+                } else if (i <= 24) {
+                    let day = i.toString();
+                    while (day.length < 2) day = "&nbsp;"+day;
+                    info += `${strings.digitsDay} ${day} - ${strings.digitsDigits} ${getSectionStart(i)-1} ${strings.digitsTo} ${getSectionEnd(i)-2}`;
+                } else {
+                    info += `${strings.digitsDigits} ${getSectionStart(i)-1} ${strings.digitsTo} ${getSectionEnd(i)-2}`;
+                }
+                display.innerHTML += ` <span class="gray">${info}</span><br>`;
+                if (i === 0) display.innerHTML += `<b>${strings.decimalSeparator}</b>${"&nbsp".repeat(25)}<span class="gray">${strings.digitsPoint}</span><br>`;
+            }
+            display.innerHTML += "...";
+        </script>
+    </body>
+</html>
