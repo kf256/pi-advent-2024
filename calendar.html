@@ -11,18 +11,43 @@
                 height: 100%;
                 touch-action: none;
             }
+            
+            #start {
+                position: absolute;
+                left: 10px;
+                top: 10px;
+                
+                border: 1px solid black;
+                border-radius: 5px;
+                padding: 2px;
+                background-color: white;
+                
+                font-family: sans-serif;
+                font-size: 20px;
+                
+                width: 50px;
+                width: fit-content;
+                overflow: hidden;
+            }
         </style>
     </head>
     <body>
         <canvas id="canvas">
         </canvas>
+        <div id="start" onclick="window.location.href = './start.html';"></div>
+        <script src="./generalFunctions.js"></script>
         <script>
-            const canvas = document.getElementById("canvas");
+            start.innerHTML = strings.back1;
+            start.onmouseenter = () => start.innerHTML = strings.back2;
+            start.onmouseleave = () => start.innerHTML = strings.back1;
+            
+            document.title = strings.calendar + " - " + strings.title;
+            
             const ctx = canvas.getContext("2d");
             
             let canvasSize;
             
-            let progress = 0;
+            let progress = storage.progress;
             
             const doors = [
                 {x: -4, y: -2, number: 14},
@@ -142,7 +167,12 @@
             }
             
             function doorClicked(door) {
-                console.log(door.number);
+                if (door.number != progress+1) return;
+                if (progress === maxProgress) return;
+                storage.task = "initial";
+                storage.source = "./calendar.html";
+                updateStorage();
+                window.location.replace("./learn.html");
             }
             
             window.addEventListener("click", function(evt) {
