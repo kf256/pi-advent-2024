@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body, select, button {
+                font-family: sans-serif;
+                font-size: 20px;
+            }
+            
+            #settings {
+                position: absolute;
+                right: 10px;
+                top: 10px;
+                
+                border: 1px solid black;
+                border-radius: 5px;
+                padding: 2px;
+                background-color: white;
+            }
+        </style>
+    </head>
+    <body>
+        <h1 id="h1"></h1>
+        <h2 id="h2"></h2>
+        <p id="information"></p>
+        <span id="options"></span>
+        <ul>
+            <li id="calendar"></li>
+            <li id="digits"></li>
+            <li id="li_practice"></li>
+        </ul>
+        <p id="xp"></p>
+        <p id="progress"></p>
+            <div id="settings" onclick="openSettings();">⚙</div>
+        <script src="./generalFunctions.js"></script>
+        <script>
+            document.title = strings.startPage + " - " + strings.title;
+            h1.innerHTML = strings.title;
+            h2.innerHTML = strings.startPage;
+            
+            information.innerHTML = strings.startDescription;
+            if (storage.progress === 24) information.innerHTML = strings.startCongratulations;
+            
+            options.innerHTML = strings.startOptions;
+            
+            calendar.innerHTML = strings.startCalendar;
+            
+            digits.innerHTML = strings.startDigits;
+            
+            li_practice.innerHTML = strings.startPractice;
+            maxXP.innerHTML = selectTasks(storage.progress).xpFactor*8;
+            if (storage.progress < 3) hide(li_practice);
+            
+            xp.innerHTML = strings.startXP;
+            xp_number.innerHTML = storage.xp;
+            if (storage.xp === 0) hide(xp);
+            
+            const learnedDigits = getSectionEnd(storage.progress)-2;
+            progress.innerHTML = strings.startLearned;
+            progress_number.innerHTML = learnedDigits;
+            if (learnedDigits === 1) progress.innerHTML = strings.startLearned1;
+            if (learnedDigits <= 0) hide(progress);
+            
+            function practice() {
+                storage.task = "general";
+                storage.source = "./start.html";
+                updateStorage();
+                window.location.replace("./learn.html");
+                return false;
+            }
+            
+            function openSettings() {
+                settings.innerHTML = "";
+                settings.setAttribute("onclick", "");
+                
+                const languageLabel = document.createElement("label");
+                languageLabel.setAttribute("for", "languageSelect");
+                languageLabel.innerHTML = strings.startLanguage;
+                settings.appendChild(languageLabel);
+                
+                const languageSelect = document.createElement("select");
+                languageSelect.setAttribute("id", "languageSelect");
+                const languageNames = Object.keys(languages);
+                for (let i = 0; i < languageNames.length; i++) {
+                    const option = document.createElement("option");
+                    option.value = languageNames[i];
+                    option.innerHTML = languages[languageNames[i]].languageName;
+                    if (languageNames[i] === storage.language) option.selected = true;
+                    languageSelect.appendChild(option);
+                }
+                settings.appendChild(languageSelect);
+                
+                settings.appendChild(document.createElement("br"));
+                
+                const applyButton = document.createElement("button");
+                applyButton.innerHTML = strings.startApply;
+                applyButton.setAttribute("onclick", "applySettings();");
+                settings.appendChild(applyButton);
+                
+                const cancelButton = document.createElement("button");
+                cancelButton.innerHTML = strings.startCancel;
+                cancelButton.setAttribute("onclick", "cancelSettings();");
+                settings.appendChild(cancelButton);
+            }
+            
+            function applySettings() {
+                storage.language = languageSelect.value;
+                languages[storage.language];
+                updateStorage();
+                location.reload();
+            }
+            
+            async function cancelSettings() {
+                await new Promise(r => setTimeout(r, 20));
+                settings.innerHTML = "⚙";
+                settings.setAttribute("onclick", "openSettings();");
+            }
+        </script>
+    </body>
+</html>
