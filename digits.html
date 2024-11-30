@@ -42,12 +42,10 @@
             
             document.title = strings.digitsPage + " - " + strings.title;
             
-            const progress = 0;
-            
             display.innerHTML = "";
             for (let i = 0; i <= 52; i++) {
                 const digits = getSection(i);
-                if (i <= progress) display.innerHTML += `<b>${digits}</b>`;
+                if (i <= storage.progress) display.innerHTML += `<b>${digits}</b>`;
                 else display.innerHTML += digits;
                 
                 let info = "&nbsp;".repeat(25-digits.length);
