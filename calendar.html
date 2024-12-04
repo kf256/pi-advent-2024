@@ -175,7 +175,7 @@
                 window.location.replace("./learn.html");
             }
             
-            window.addEventListener("click", function(evt) {
+            document.addEventListener("click", function(evt) {
                 const x = Math.round((evt.clientX-canvas.width/2)/canvasSize*10);
                 const y = Math.round((evt.clientY-canvas.height/2)/canvasSize*10);
                 for (let i = 0; i < doors.length; i++) {
