@@ -223,14 +223,14 @@
                 
                 let html = '<span class="gray">';
                 html += digitsBefore;
-                if (section === 1) html += ".";
+                if (section === 1) html += strings.decimalSeparator;
                 html += "</span> ";
                 
                 if (!asInput) html += digits;
                 else for (let i = 0; i < digits.length; i++) {
                     html += `<span id="${i}" style="outline: 1px solid gray;">&nbsp;</span>`;
                 }
-                if (section === 0) html += ".";
+                if (section === 0) html += strings.decimalSeparator;
                 
                 html += ' <span class="gray">';
                 html += digitsAfter;
